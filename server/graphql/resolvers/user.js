@@ -42,7 +42,7 @@ export const userResolvers = {
         throw new UserInputError("Wrong credentials", { errors });
       }
       //When the password is wrong
-      const bcryptMatch = await bcrypt.match(password, user.password);
+      const bcryptMatch = await bcrypt.compare(password, user.password);
       if (!bcryptMatch) {
         errors.general = "Wrong credentials";
         throw new UserInputError("Wrong credentials", { errors });
