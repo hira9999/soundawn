@@ -1,122 +1,92 @@
-import { UserIcon } from "@heroicons/react/solid";
-import React, { ReactEventHandler, useState } from "react";
+import { gql, useMutation } from "@apollo/client";
+import React, { useState } from "react";
+import { useForm } from "../hooks/useForm";
+
+type Error = {
+  userName: string | null;
+  email: string | null;
+  password: string | null;
+};
 
 const LoginModal = () => {
-  const [switchModalState, setSwitchModalState] = useState<string>("login");
+  const [errors, setErrors] = useState<Error | null>(null);
 
-  const onModalChage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSwitchModalState(e?.currentTarget?.value);
-  };
+  const { onChange, onSubmit, values } = useForm(loginCallback, {
+    userName: "",
+    password: "",
+  });
+
+  const [login] = useMutation(LOGIN, {
+    variables: values,
+    update(cache, { data: { login: userData } }) {},
+    onError(err) {
+      console.log(err);
+      setErrors(err.graphQLErrors[0].extensions.errors as Error);
+    },
+  });
+
+  function loginCallback() {
+    login();
+  }
   return (
     <>
-      {/* The button to open modal  */}
-      <label
-        htmlFor="my-modal-4"
-        className="btn modal-button absolute top-5 right-5"
-      >
-        <UserIcon className="w-5 h-5" />
-      </label>
-
-      {/* Put this part before </body> tag  */}
-      <input type="checkbox" id="my-modal-4" className="modal-toggle" />
-      <label htmlFor="my-modal-4" className="modal cursor-pointer">
-        <label className="modal-box relative" htmlFor="">
-          {/* Modal state */}
-          <div className="btn-group">
-            <input
-              type="radio"
-              name="option"
-              data-title="LOGIN"
-              className="btn"
-              value="login"
-              onChange={(e) => onModalChage(e)}
-              defaultChecked
-            />
-            <input
-              type="radio"
-              name="option"
-              data-title="REGISTER"
-              value="register"
-              className="btn"
-              onChange={(e) => onModalChage(e)}
-            />
+      <div className="p-7">
+        <form onSubmit={onSubmit}>
+          <div className="form-control">
+            <label className="label"></label>
+            <label className="input-group input-group-vertical">
+              <span>User Name</span>
+              <input
+                type="text"
+                name="userName"
+                placeholder="info@site.com"
+                className="input input-bordered"
+                value={values}
+                onChange={onChange}
+              />
+            </label>
           </div>
-          {/* inputs */}
-          {switchModalState === "login" ? (
-            <>
-              <div className="p-7">
-                <div className="form-control">
-                  <label className="label"></label>
-                  <label className="input-group input-group-vertical">
-                    <span>User Name</span>
-                    <input
-                      type="text"
-                      placeholder="info@site.com"
-                      className="input input-bordered"
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label"></label>
-                  <label className="input-group input-group-vertical">
-                    <span>Password</span>
-                    <input type="text" className="input input-bordered" />
-                  </label>
-                </div>
-              </div>
-              <button className="btn">LOGIN</button>{" "}
-            </>
-          ) : (
-            <>
-              <div className="p-7">
-                <div className="form-control">
-                  <label className="label"></label>
-                  <label className="input-group input-group-vertical">
-                    <span>User Name</span>
-                    <input
-                      type="text"
-                      placeholder="info@site.com"
-                      className="input input-bordered"
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label"></label>
-                  <label className="input-group input-group-vertical">
-                    <span>Email</span>
-                    <input
-                      type="text"
-                      placeholder="info@site.com"
-                      className="input input-bordered"
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label"></label>
-                  <label className="input-group input-group-vertical">
-                    <span>Password</span>
-                    <input
-                      type="text"
-                      placeholder="info@site.com"
-                      className="input input-bordered"
-                    />
-                  </label>
-                </div>
-                <div className="form-control">
-                  <label className="label"></label>
-                  <label className="input-group input-group-vertical">
-                    <span>Comfirm Password</span>
-                    <input type="text" className="input input-bordered" />
-                  </label>
-                </div>
-              </div>
-              <button className="btn">REGISTER</button>{" "}
-            </>
-          )}
-        </label>
-      </label>
+          <div className="form-control">
+            <label className="label"></label>
+            <label className="input-group input-group-vertical">
+              <span>Password</span>
+              <input
+                type="text"
+                name="password"
+                className="input input-bordered"
+                value={values}
+                onChange={onChange}
+              />
+            </label>
+          </div>
+          <button type="submit" className="btn">
+            LOGIN
+          </button>
+        </form>
+        {errors && (
+          <div className="">
+            <ul>
+              {Object.values(errors).map((error, i) => (
+                <li key={i}>#{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </>
   );
 };
 
 export default LoginModal;
+
+const LOGIN = gql`
+  mutation login($userName: String!, $password: String!) {
+    login(loginInput: { userName: $userName, password: $password }) {
+      id
+      userName
+      token
+      createAt
+      email
+    }
+  }
+`;
